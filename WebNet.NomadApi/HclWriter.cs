@@ -39,5 +39,36 @@ namespace WebNet.NomadApi
         }
 
         public override string ToString() => _sb.ToString();
+
+        public HclWriter Block(string name, Action body)
+        {
+            AppendLine($"{name} {{");
+            _indent++;
+            body();
+            _indent--;
+            AppendLine("}");
+            return this;
+        }
+
+        public HclWriter Map(string name, Dictionary<string, object> map)
+        {
+            Block(name, () =>
+            {
+                foreach (var kv in map)
+                    Attribute(kv.Key, kv.Value);
+            });
+
+            return this;
+        }
+
+        private string FormatValue(object value)
+        {
+            return value switch
+            {
+                string s => $"\"{s}\"",
+                IEnumerable<string> list => $"[{string.Join(", ", list.Select(x => $"\"{x}\""))}]",
+                _ => value.ToString()
+            };
+        }
     }
 }
